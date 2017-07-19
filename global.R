@@ -29,7 +29,7 @@ source("config.R",  encoding = 'UTF-8', local = T)
  expenses = convertCurrency(expenses, exchange)
  
  expenses$Exclude[is.na(expenses$Exclude)] = F
- expenses$Who[expenses$Who==""] = "Both"
+ expenses$Who[expenses$Who==""] = "OH"
 
  write.csv(expenses, "expenses.csv",  row.names = F)
  write.csv(exchange, "exchange.csv",  row.names = F)
@@ -92,19 +92,32 @@ if(nrow(uniqueCities)>0){
  write.csv(cityLocations, "city.locations.csv", row.names=F)
  
  uniqueCitiesLocations = unique(merge(cityLocations, expenses[,c("City", "Country", "Check.In", "Who")]))
- uniqueCitiesLocations = uniqueCitiesLocations[order(uniqueCitiesLocations$Check.In),]
-
- UCL.both = uniqueCitiesLocations[uniqueCitiesLocations$Who=="Both",]
- UCL = align.cities(UCL.both)
-
+ #uniqueCitiesLocations = uniqueCitiesLocations[order(uniqueCitiesLocations$Check.In),]
+ 
+ #UCL = ddply(uniqueCitiesLocations, .(Who), align.cities )
+ #'UCL = UCL[order(UCL$Check.In),]
+ 
+ UCL.all = data.frame()
+ persons = unique(unlist(sapply(unique(uniqueCitiesLocations$Who), strsplit, "")))
+ for(p in persons){
+  person.route = uniqueCitiesLocations[grep(p, uniqueCitiesLocations$Who),]
+  person.route$Who.route = p
+  person.route = person.route[!duplicated(person.route[,1:5]),]
+  person.route = person.route[order(person.route$Check.In),]
+  person.route = align.cities(person.route)
+  
+  UCL.all = rbind(UCL.all, person.route)
+ }
+ 
  # remove Locals that can not be found 
- UCL = subset(UCL, !City %in% c("Rila", "Kol-Ukok"))
+ UCL = subset(UCL.all, !City %in% c("Rila", "Kol-Ukok"))
 
  index = c()
  for(i in 2:nrow(UCL)) {
-  if(UCL[i,"City"] == UCL[i-1,"City"]) index = c(index, i-1)
+  if(UCL[i,"City"] == UCL[i-1,"City"] & UCL[i,"Who.route"] == UCL[i-1,"Who.route"]) index = c(index, i-1)
  }
  UCL.route = UCL[-index,]
+
 
  #####Distances
  dest = setupDestTables( "[Bb]us:", type = "bus" )
@@ -114,11 +127,12 @@ if(nrow(uniqueCities)>0){
  dest = rbind(dest, setupDestTables(  "[Tt]axi:", type = "taxi"))
  dest = rbind(dest, setupDestTables(  "[Hh]ike:", type = "hike"))
 
- uniqueCitiesLocations2 = UCL.route[c("City", "Country", "lat", "lon")]
+ uniqueCitiesLocations2 = UCL.route[c("City", "Country", "lat", "lon", "Who.route", "Who")]
 
- travelRoutes = buildTravelRoutes(uniqueCitiesLocations2, dest, myghkey)
- actualTravelData = travelRoutes$actualTravelData
- dest = travelRoutes$dest
+ #travelRoutes = buildTravelRoutes(uniqueCitiesLocations2, dest, ghkey)
+ travelRoutes = dlply(uniqueCitiesLocations2, .(Who.route), buildTravelRoutes, dest, ghkey )
+ actualTravelData = ldply(travelRoutes, function(x){ x$actualTravelData} )
+ dest = ldply(travelRoutes, function(x){ x$dest} )
  
  write.csv(actualTravelData, "travel.routes.csv", row.names=F)
  write.csv(dest, "distance.csv", row.names=F) 

@@ -99,25 +99,27 @@ align.cities = function(uniqueCitiesLocations){
  n = nrow(uniqueCitiesLocations)
  index = 1:n
  for(i in 2:(n-1)){
-  UCL = uniqueCitiesLocations[index,] 
+  UCL = uniqueCitiesLocations[index,]
+  #previous city
   city1 = UCL[i-1,]
+  #current city
   city2 = UCL[i,]
+  #next city
   city3 = UCL[i+1,]
   
   
   
   if(city1$Check.In == city2$Check.In & city2$Check.In == city3$Check.In) {
    #three cities in one day
-   print("3 cities visted in one day - trying to align cities by looking at previous day's cities.")
+   catL("3 cities visted in one day - trying to align cities by looking at previous day's cities.")
    
    #print(i)
    city0 = UCL[i-2,]
    city4 = UCL[i+2,]
    
-   print("current order of cities")
-   print(paste(city1$City, city2$City, city3$City, sep=" to "))
-   print(paste("previous city", city0$City))
-   print(paste("next city", city4$City))
+   catL("Current order of cities")
+   catL(paste(city0$City, city1$City, city2$City, city3$City, city4$City, sep=" --> "))
+   catL(paste(city0$Check.In, city1$Check.In, city2$Check.In, city3$Check.In, city4$Check.In, sep=" --> "))
    
    to1 = which(city0$City == UCL[(i-1):(i+1),"City"])
    to3 = which(city4$City == UCL[(i-1):(i+1),"City"])
@@ -126,7 +128,7 @@ align.cities = function(uniqueCitiesLocations){
    if(length(to2)==1){
     index[(i-1):(i+1)] = index[(i-1):(i+1)][c(to1, to2, to3)]
    } else {
-    print("trying min distance method")
+    catL("trying min distance method")
     d = as.matrix(dist(UCL[(i-2):(i+2),c("lat", "lon")]))
     diag(d)=Inf
     a = apply(d, 1, function(x) {which.min(x)} )
@@ -136,11 +138,20 @@ align.cities = function(uniqueCitiesLocations){
     to2=(2:4)[!2:4 %in% c(to1, to3)]
     
     index[(i-2):(i+2)] = index[(i-2):(i+2)][c(1,to1,to2,to3,5)]
-   }   
+   }
+   
+   catL("new order of cities")
+   catL(paste(uniqueCitiesLocations[index,][i-2,]$City, uniqueCitiesLocations[index,][i-1,]$City, uniqueCitiesLocations[index,][i,]$City, uniqueCitiesLocations[index,][i+1,]$City, uniqueCitiesLocations[index,][i+2,]$City, sep=" --> "))
+   catL(paste(uniqueCitiesLocations[index,][i-2,]$Check.In, uniqueCitiesLocations[index,][i-1,]$Check.In, uniqueCitiesLocations[index,][i,]$Check.In, uniqueCitiesLocations[index,][i+1,]$Check.In, uniqueCitiesLocations[index,][i+2,]$Check.In, sep=" --> "))
+   catL("------------------------------")    
   } else if(city1$City != city2$City & city1$Check.In == city2$Check.In & city1$City==city3$City) {
    #previous city and current city are not the same
    #previous city and current city have the same check in date
    #current city and next city are different
+   
+   catL("Current order of cities")
+   catL(paste(city1$City, city2$City, city3$City, sep=" --> "))
+   catL(paste(city1$Check.In, city2$Check.In, city3$Check.In, sep=" --> "))
    
    if(length(unique(UCL[(i-2):(i+2),"City"])) < 3 & length(unique(UCL[(i-2):(i+2),"Check.In"])) < 4){
    #if the same 2 cities are visited twice within 5 days with a stay of 2 days each
@@ -148,27 +159,39 @@ align.cities = function(uniqueCitiesLocations){
    }else if(as.character(city2$City) > as.character(city1$City) ){
     #print("condition 1")
     #print(i)
-   
+
     index[i] = i-1
     index[i-1] = i
    }
+   
+   catL("new order of cities")
+   catL(paste(uniqueCitiesLocations[index,][i-1,]$City, uniqueCitiesLocations[index,][i,]$City, uniqueCitiesLocations[index,][i+1,]$City, sep=" --> "))
+   catL(paste(uniqueCitiesLocations[index,][i-1,]$Check.In, uniqueCitiesLocations[index,][i,]$Check.In, uniqueCitiesLocations[index,][i+1,]$Check.In, sep=" --> "))
+   catL("------------------------------")
+   
   } else if(city3$City != city2$City & city3$Check.In == city2$Check.In & city1$City==city3$City) {
    #next city and current city are not the same
    #next city and current city have the same check in date
    #previous city and next city are the same
+   catL("Current order of cities")
+   catL(paste(city1$City, city2$City, city3$City, sep=" --> "))
+   catL(paste(city1$Check.In, city2$Check.In, city3$Check.In, sep=" --> "))
+   
    if(as.character(city2$City) < as.character(city3$City) ){
     #print("condition 2")
     #print(i)
     index[i+1] = i
     index[i] = i + 1
    }
-   # print("new order of cities")
-   # print(paste(uniqueCitiesLocations[index,][i-1,]$City, uniqueCitiesLocations[index,][i,]$City, uniqueCitiesLocations[index,][i+1,]$City, sep=" to "))
+    catL("new order of cities")
+    catL(paste(uniqueCitiesLocations[index,][i-1,]$City, uniqueCitiesLocations[index,][i,]$City, uniqueCitiesLocations[index,][i+1,]$City, sep=" --> "))
+    catL(paste(uniqueCitiesLocations[index,][i-1,]$Check.In, uniqueCitiesLocations[index,][i,]$Check.In, uniqueCitiesLocations[index,][i+1,]$Check.In, sep=" --> "))
    # print(paste("previous city", uniqueCitiesLocations[index,][i-2,]$City))
    # print(paste("next city", uniqueCitiesLocations[index,][i+1,]$City))
-   # print("------------------------------")
+   catL("------------------------------")
   }
  }
+ UCL = uniqueCitiesLocations[index,]
  row.names(UCL) = 1:n
  UCL
 }
@@ -206,7 +229,6 @@ setupDestTables = function(s, note = expenses$Note, e = expenses, type ){
 
 
 buildTravelRoutes = function(uniqueCitiesLocations2,  dest, ghkey){
- #url="http://www.yournavigation.org/api/1.0/gosmore.php?"
  url="https://graphhopper.com/api/1/route?"
  format = "json"
  distances = data.frame()
@@ -295,3 +317,5 @@ buildTravelRoutes = function(uniqueCitiesLocations2,  dest, ghkey){
   dest = dest
  )
 }
+
+catL = function(...) cat(..., file="log.txt", fill=T, append=T)
