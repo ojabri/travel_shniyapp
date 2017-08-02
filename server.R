@@ -56,15 +56,22 @@ shinyServer(function(input, output, session) {
   
  output$mymap <- renderLeaflet({
   t = points()$travel
-  leaflet() %>%
+  pal = c("red", "green")#brewer.pal(max(length(persons),3),"Set3")
+  
+  map = leaflet() %>%
    addProviderTiles("Stamen.TonerLite", options = providerTileOptions(noWrap = TRUE)) %>%
-   addCircleMarkers(~lon, ~lat, radius = 5, color = "red", stroke = FALSE, fillOpacity = 0.25, popup=~City, data = points()$cities) %>%
-   addPolylines(~lon, ~lat, data=subset(t, Flight==F), group = "Overland", color="green") %>%
-   addPolylines(~lon, ~lat, data=subset(t, Flight==T), group = "Flights", color="green") %>%
-   addLayersControl(
-    overlayGroups = c("Overland", "Flights"),
+   addCircleMarkers(~lon, ~lat, radius = 5, color = "red", stroke = FALSE, fillOpacity = 0.25, popup=~City, data = points()$cities)
+   #addPolylines(~lon, ~lat, data=subset(t, Flight==F), group = "Overland", color="green") %>%
+   #addPolylines(~lon, ~lat, data=subset(t, Flight==T), group = "Flights", color="green")
+   
+  for(p in persons){ map = map %>% addPolylines(~lon, ~lat, data=subset(t, Who.route==p), group = p, color = pal[p==persons]) }
+  map = map %>%   
+  addLayersControl(
+    #overlayGroups = c("Overland", "Flights", persons) ,
+    overlayGroups = c(persons) ,
     options = layersControlOptions(collapsed = FALSE)
   )
+  map
  })
    
  output$totalSpend <- renderValueBox({
@@ -85,7 +92,6 @@ shinyServer(function(input, output, session) {
  
  output$distTraveled1 <- renderValueBox({
   if(inputDistanceUnits() == "miles") {units = "Miles"} else {units = "KM"}
-  print(sum(inputCountryDist()[,inputDistanceUnits()]))
   distance = paste(pn(sum(inputCountryDist()[,inputDistanceUnits()])), units)
   valueBox("Distance Travelled", distance , icon = icon("road"), color="green")
  }) 
@@ -269,13 +275,6 @@ shinyServer(function(input, output, session) {
  })
  
  #END CITY#
- 
- ###########
- ###STEPS###
- ###########
- source("steps.R", local = T,  encoding = 'UTF-8')
-
- #END STEPS#
  
  #############
  #UI ELEMENTS#

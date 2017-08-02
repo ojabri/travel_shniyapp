@@ -10,6 +10,7 @@ library(dygraphs)
 library(plyr)
 library(reshape)
 library(shinyBS)
+library("RColorBrewer")
 
 #http://api.fixer.io/2000-01-03?base=USD
 
@@ -17,29 +18,21 @@ library(shinyBS)
 source("functions.R",  encoding = 'UTF-8', local = T)
 source("config.R",  encoding = 'UTF-8', local = T)
 
-#if(!(file.exists("expenses.csv") | file.exists("exchange.csv"))){
- expenses = import(expensesURL, format="csv")
- exchange = import(exchangeURL, format="csv")
+expenses = import(expensesURL, format="csv")
+exchange = import(exchangeURL, format="csv")
 
- expenses = prepData(expenses, "%d/%m/%Y")
- names(exchange) = make.names(names(exchange))
- exchange$Date = as.Date(as.character(exchange$Date), format =  "%d/%m/%Y")
+expenses = prepData(expenses, "%d/%m/%Y")
+names(exchange) = make.names(names(exchange))
+exchange$Date = as.Date(as.character(exchange$Date), format =  "%d/%m/%Y")
  
- expenses = spreadMultiDayExpenses(expenses)
- expenses = convertCurrency(expenses, exchange)
+expenses = spreadMultiDayExpenses(expenses)
+expenses = convertCurrency(expenses, exchange)
  
- expenses$Exclude[is.na(expenses$Exclude)] = F
- expenses$Who[expenses$Who==""] = "OH"
+expenses$Exclude[is.na(expenses$Exclude)] = F
+expenses$Who[expenses$Who==""] = "OH"
 
- write.csv(expenses, "expenses.csv",  row.names = F)
- write.csv(exchange, "exchange.csv",  row.names = F)
-#} else {
-# expenses = read.csv("expenses.csv")
-# exchange = read.csv("exchange.csv")
- 
-# expenses = prepData(expenses, "%Y-%m-%d")
-#}
-steps = read.csv("steps.csv")
+write.csv(expenses, "expenses.csv",  row.names = F)
+write.csv(exchange, "exchange.csv",  row.names = F)
 
 countryMeta = read.csv(countryMeta.csv)
 #uniqueCitiesLocations = read.csv("uniqueCitiesLocations.csv")
@@ -98,7 +91,7 @@ if(nrow(uniqueCities)>0){
  #'UCL = UCL[order(UCL$Check.In),]
  
  UCL.all = data.frame()
- persons = unique(unlist(sapply(unique(uniqueCitiesLocations$Who), strsplit, "")))
+ if(!exists("persons")) persons = unique(unlist(sapply(unique(uniqueCitiesLocations$Who), strsplit, "")))
  for(p in persons){
   person.route = uniqueCitiesLocations[grep(p, uniqueCitiesLocations$Who),]
   person.route$Who.route = p
@@ -143,7 +136,8 @@ if(nrow(uniqueCities)>0){
  
  actualTravelData = read.csv("travel.routes.csv")
  dest = read.csv("distance.csv")
-
+ 
+ actualTravelData = actualTravelData[actualTravelData$Who.route %in% persons,]
 }
 
 # if(ForceRebuild){
@@ -159,10 +153,3 @@ if(nrow(uniqueCities)>0){
 #Local transport costs
 #local.transport.query = "[Ll]ocal|[Mm]etro|[Tt]axi|[Tt]ube|[Tt]uk[ Tt]+uk"
 #subset(expenses[grep(local.transport.query, expenses$Note),], What.was.it.=="travel")
-
-#Steps
-#steps$date = as.Date(steps$date, format="%Y-%m-%d")
-steps$date = as.Date(steps$date, format="%d/%m/%Y")
-#expenses = merge(expenses, steps, by.x="Check.In", by.y="date")
-steps = steps[steps$steps!=0,]
-row.names(steps) = steps$date

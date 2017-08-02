@@ -13,7 +13,7 @@ dashboardPage(
   menuItem("Summary", tabName = "Summary", icon = icon("money")),
   menuItem("Cities", tabName = "Cities", icon = icon("building")),
   menuItem("Travel", tabName = "Travel", icon = icon("bus")),
-  menuItem("Steps", icon = icon("paw"), tabName = "Steps"),
+  #menuItem("Steps", icon = icon("paw"), tabName = "Steps"),
   menuItem(actionButton("updateExpenses", "Update Expenses", icon = icon("refresh")))
  ),
  radioButtons(inputId = "Currency", "Currency", c("Dollars" = "Dollars", "Pounds"="Pounds")),
@@ -43,23 +43,6 @@ dashboardPage(
      infoBoxOutput("hostelCost",width = 2),
      infoBoxOutput("miscCost",width = 2),
      infoBoxOutput("travelCost",width = 2)
-    )
-   ),
-   tabItem(tabName = "Steps",
-    fluidRow(
-     column(width = 8,
-      box(title = "Steps Over Time", width = NULL, status = "success", dygraphOutput("stepGraph")),
-      box(title = "Distanced Walked by Country", width = NULL, status = "success", DT::dataTableOutput('stepsSummaryCountry')),
-      box(title = "Distanced Walked by City", width = NULL, status = "success", DT::dataTableOutput('stepsSummaryCity'))
-     )
-    )
-   ),
-   tabItem(tabName = "Travel",
-    fluidRow(
-     column(width = 8,
-      box(width = NULL, status = "success",  withTags(h2("Travel Cost Summary")), DT::dataTableOutput('distSummary'))
-     ),
-     valueBoxOutput("distTraveled2")
     )
    ),
    tabItem(tabName = "Cities",
